@@ -34,7 +34,7 @@ export default function ResultBoard() {
     const fetchTodayResults = async () => {
       try {
         // Fetch happens in the background
-        const response = await fetch(api.NewScrapeData.saveScrape);
+        const response = await fetch(api.NewScrapeData.getScrape);
         const resJson = await response.json();
 
         if (resJson?.success && resJson?.data && mounted) {

@@ -1,72 +1,36 @@
 .clean-container {
-  padding: 20px;
-  max-width: 100%;
-  margin: 0 auto;
-  font-family: Arial, sans-serif; /* Clean standard font */
-}
-
-.header-simple {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-
-.header-simple h2 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
+  padding: 16px;
 }
 
 .table-outer {
-  border: 1px solid #ddd;
-  border-radius: 2px;
   overflow-x: auto;
 }
 
 .minimal-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
 }
 
-.minimal-table th {
-  background: #f8f8f8;
-  padding: 10px;
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #555;
-  border: 1px solid #ddd;
-  text-transform: uppercase;
-}
-
+.minimal-table th,
 .minimal-table td {
-  padding: 10px;
   border: 1px solid #ddd;
-  font-size: 0.85rem;
-  font-weight: 400; /* Normal weight - No Bold */
-  color: #222; /* Same color for all data */
+  padding: 8px;
   text-align: center;
 }
 
-.date-col {
-  background-color: #fcfcfc;
-  color: #555;
-  white-space: nowrap;
-}
-
-/* Sticky column for mobile/small screens */
 .sticky-col {
   position: sticky;
   left: 0;
-  background: #f8f8f8;
-  z-index: 1;
+  background: #fff;
+  font-weight: bold;
 }
 
 .simple-loader {
-  padding: 40px;
+  padding: 20px;
   text-align: center;
-  color: #888;
+}
+
+.error-text {
+  color: red;
+  padding: 16px;
 }

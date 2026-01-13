@@ -13,6 +13,7 @@ const api = {
   },
   NewScrapeData:{
     saveScrape:`${DataAPI}/v1/scrape`,
+    getScrape:`${DataAPI}/v1/results`,
   }
 };
 

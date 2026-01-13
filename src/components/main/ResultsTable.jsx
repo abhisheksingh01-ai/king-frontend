@@ -77,7 +77,7 @@ export default function ResultsTable() {
       const resultRows = defaultRows.map((r) => ({ ...r }));
 
       try {
-        const response = await fetch(api.NewScrapeData.saveScrape);
+        const response = await fetch(api.NewScrapeData.getScrape);
         if (!response.ok) throw new Error("Network error");
         
         const resData = await response.json();
