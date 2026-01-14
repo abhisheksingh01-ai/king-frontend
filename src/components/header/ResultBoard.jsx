@@ -2,11 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api/api";
 
 /* ---------- CONFIG ---------- */
-const GAMES = [
-  { key: "DESAWAR" },
-  { key: "DELHI BAZAR" },
-  { key: "NOIDA KING" },
-];
+const GAMES = ["DESAWAR", "DELHI BAZAR", "NOIDA KING"];
 
 /* ---------- HELPERS ---------- */
 const formatDate = (d) =>
@@ -15,46 +11,35 @@ const formatDate = (d) =>
 export default function ResultBoard() {
   const today = useMemo(() => formatDate(new Date()), []);
 
-  /* ---------- MAP GAME NAME → INDEX ---------- */
-  const gameIndexByName = useMemo(() => {
-    const map = {};
-    GAMES.forEach((g, i) => {
-      map[g.key.toUpperCase()] = i;
-    });
-    return map;
-  }, []);
-
   /* ---------- DEFAULT RESULTS (Instant UI) ---------- */
   const defaultResults = useMemo(
-    () => GAMES.map((g) => ({ name: g.key, number: "-" })),
+    () => GAMES.map((name) => ({ name, number: "-" })),
     []
   );
 
   const [results, setResults] = useState(defaultResults);
 
-  /* ---------- FETCH RESULTS ---------- */
   useEffect(() => {
     let isMounted = true;
 
     const fetchTodayResults = async () => {
-      // fresh copy
       const updatedResults = defaultResults.map((r) => ({ ...r }));
 
       try {
-        const response = await fetch(api.NewScrapeData.getScrape);
+        const response = await fetch(api.NewScrapeData.gameChart); // use /game-chart
         if (!response.ok) throw new Error("Network error");
 
         const resData = await response.json();
 
         if (resData?.success && resData?.data && isMounted) {
-          resData.data.forEach(({ gameName, date, resultNumber }) => {
-            if (date === today) {
-              const index = gameIndexByName[gameName?.toUpperCase()];
-              if (index !== undefined) {
-                updatedResults[index].number = resultNumber ?? "-";
-              }
-            }
-          });
+          // Find today’s row
+          const todayRow = resData.data.find((row) => row.date === today);
+
+          if (todayRow) {
+            GAMES.forEach((game, i) => {
+              updatedResults[i].number = todayRow[game] || "-";
+            });
+          }
 
           setResults(updatedResults);
         }
@@ -68,9 +53,8 @@ export default function ResultBoard() {
     return () => {
       isMounted = false;
     };
-  }, [today, defaultResults, gameIndexByName]);
+  }, [today, defaultResults]);
 
-  /* ---------- UI ---------- */
   return (
     <div className="w-full flex justify-center my-10">
       <div className="w-[95%] rounded-3xl border-[3px] border-white p-1 bg-black shadow-2xl">
