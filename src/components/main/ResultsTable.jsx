@@ -3,14 +3,15 @@ import api from "../../api/api";
 
 /* ---------- CONFIG ---------- */
 const GAMES = [
-  { key: "DESAWAR", time: "(05:00 AM)" },
-  { key: "SHRI GANESH", time: "(04:30 PM)" },
-  { key: "DELHI BAZAR", time: "(03:00 PM)" },
-  { key: "GALI", time: "(11:30 PM)" },
-  { key: "GHAZIABAD", time: "(08:30 PM)" },
-  { key: "FARIDABAD", time: "(06:00 PM)" },
-  { key: "NOIDA KING", time: "(10:30 PM)" },
+  { key: "DESAWAR", time: "(06:00 AM)" },
+  { key: "SHRI GANESH", time: "(03:00 PM)" },
+  { key: "DELHI BAZAR", time: "(02:45 PM)" },
+  { key: "GALI", time: "(12:00 PM)" },
+  { key: "GHAZIABAD", time: "(10:25 PM)" },
+  { key: "FARIDABAD", time: "(06:50 PM)" },
+  { key: "NOIDA KING", time: "(06:30 PM)" },
 ];
+
 
 const formatDate = (d) =>
   `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(
