@@ -2,15 +2,6 @@ import React from "react";
 import { useGameChartData } from "../../hooks/useGameChartData";
 import "./GameChartTable.css";
 
-const GAME_MAP = {
-  "116": "DESAWAR",
-  "127": "SHRI GANESH",
-  "126": "DELHI BAZAR",
-  "120": "GALI",
-  "119": "GHAZIABAD",
-  "117": "FARIDABAD",
-};
-
 const COLUMNS = [
   "DESAWAR",
   "SHRI GANESH",
@@ -22,7 +13,7 @@ const COLUMNS = [
 ];
 
 export default function GameChartTable() {
-  const { rows, loading, error } = useGameChartData(COLUMNS, GAME_MAP);
+  const { rows, loading, error } = useGameChartData();
 
   if (loading && rows.length === 0)
     return <div className="simple-loader">Loading data...</div>;
@@ -35,7 +26,7 @@ export default function GameChartTable() {
         <thead>
           <tr>
             <th>Date</th>
-            {COLUMNS.map(col => (
+            {COLUMNS.map((col) => (
               <th key={col}>{col}</th>
             ))}
           </tr>
@@ -46,10 +37,10 @@ export default function GameChartTable() {
               <td colSpan={COLUMNS.length + 1}>No data available</td>
             </tr>
           ) : (
-            rows.map(row => (
+            rows.map((row) => (
               <tr key={row.date}>
                 <td>{row.date}</td>
-                {COLUMNS.map(col => (
+                {COLUMNS.map((col) => (
                   <td key={col}>{row[col]}</td>
                 ))}
               </tr>

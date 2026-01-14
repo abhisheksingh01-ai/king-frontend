@@ -1,8 +1,8 @@
-export function parseDateToTimestamp(dateStr) {
-  if (!dateStr) return 0;
-
-  const [d, m, y] = dateStr.split("-").map(Number);
-  const time = new Date(y, m - 1, d).getTime();
-
-  return Number.isNaN(time) ? 0 : time;
+/**
+ * Convert DD-MM-YYYY → timestamp
+ * Used for fast sorting
+ */
+export function parseDateToTimestamp(date) {
+  const [dd, mm, yyyy] = date.split("-").map(Number);
+  return new Date(yyyy, mm - 1, dd).getTime();
 }

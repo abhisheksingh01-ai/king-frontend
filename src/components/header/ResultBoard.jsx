@@ -3,47 +3,53 @@ import api from "../../api/api";
 
 /* ---------- CONFIG ---------- */
 const GAMES = [
-  { key: "DESAWAR", gameId: "116" },
-  { key: "DELHI BAZAR", gameId: "126" },
-  { key: "NOIDA KING", gameId: "001" },
+  { key: "DESAWAR" },
+  { key: "DELHI BAZAR" },
+  { key: "NOIDA KING" },
 ];
 
-const getTodayDate = () => {
-  const d = new Date();
-  return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
-};
+/* ---------- HELPERS ---------- */
+const formatDate = (d) =>
+  `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
 
 export default function ResultBoard() {
-  const today = useMemo(() => getTodayDate(), []);
-  
-  // 1. Set initial state to default results immediately (Removes the Loading Screen)
-  const [results, setResults] = useState(
-    GAMES.map((g) => ({ name: g.key, number: "-" }))
-  );
-  const [dateTime, setDateTime] = useState(`${today} Results`);
+  const today = useMemo(() => formatDate(new Date()), []);
 
-  const gameIndexById = useMemo(() => {
+  /* ---------- MAP GAME NAME → INDEX ---------- */
+  const gameIndexByName = useMemo(() => {
     const map = {};
-    GAMES.forEach((g, i) => (map[g.gameId] = i));
+    GAMES.forEach((g, i) => {
+      map[g.key.toUpperCase()] = i;
+    });
     return map;
   }, []);
 
+  /* ---------- DEFAULT RESULTS (Instant UI) ---------- */
+  const defaultResults = useMemo(
+    () => GAMES.map((g) => ({ name: g.key, number: "-" })),
+    []
+  );
+
+  const [results, setResults] = useState(defaultResults);
+
+  /* ---------- FETCH RESULTS ---------- */
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
     const fetchTodayResults = async () => {
-      try {
-        // Fetch happens in the background
-        const response = await fetch(api.NewScrapeData.getScrape);
-        const resJson = await response.json();
+      // fresh copy
+      const updatedResults = defaultResults.map((r) => ({ ...r }));
 
-        if (resJson?.success && resJson?.data && mounted) {
-          // Create a copy of current state to update
-          const updatedResults = GAMES.map((g) => ({ name: g.key, number: "-" }));
-          
-          resJson.data.forEach(({ gameId, date, resultNumber }) => {
+      try {
+        const response = await fetch(api.NewScrapeData.getScrape);
+        if (!response.ok) throw new Error("Network error");
+
+        const resData = await response.json();
+
+        if (resData?.success && resData?.data && isMounted) {
+          resData.data.forEach(({ gameName, date, resultNumber }) => {
             if (date === today) {
-              const index = gameIndexById[gameId];
+              const index = gameIndexByName[gameName?.toUpperCase()];
               if (index !== undefined) {
                 updatedResults[index].number = resultNumber ?? "-";
               }
@@ -53,16 +59,18 @@ export default function ResultBoard() {
           setResults(updatedResults);
         }
       } catch (err) {
-        console.error("❌ ResultBoard Background Fetch Error:", err);
+        console.error("❌ ResultBoard Error:", err);
+        if (isMounted) setResults(defaultResults);
       }
     };
 
     fetchTodayResults();
-    return () => (mounted = false);
-  }, [today, gameIndexById]);
+    return () => {
+      isMounted = false;
+    };
+  }, [today, defaultResults, gameIndexByName]);
 
-  // 2. Removed the "if (loading)" block entirely for instant UI rendering
-
+  /* ---------- UI ---------- */
   return (
     <div className="w-full flex justify-center my-10">
       <div className="w-[95%] rounded-3xl border-[3px] border-white p-1 bg-black shadow-2xl">
@@ -70,7 +78,7 @@ export default function ResultBoard() {
 
         <div className="rounded-3xl border-[3px] border-white p-10 text-center bg-[radial-gradient(circle,#7a0000,#1a0000,black)]">
           <h2 className="text-yellow-300 font-semibold text-xl mb-6 tracking-widest">
-            {dateTime}
+            {today} Results
           </h2>
 
           <div className="space-y-6">
@@ -79,7 +87,6 @@ export default function ResultBoard() {
                 <h3 className="text-3xl font-extrabold text-white tracking-wider uppercase">
                   {item.name}
                 </h3>
-                {/* Numbers will "pop" in once loaded */}
                 <p className="text-yellow-300 text-5xl font-bold mt-1">
                   {item.number}
                 </p>

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
-import { normalizeGameChartData } from "../services/gameChart.service";
 
-export function useGameChartData(columns, gameMap) {
+export function useGameChartData() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,63 +9,36 @@ export function useGameChartData(columns, gameMap) {
   useEffect(() => {
     const controller = new AbortController();
 
-    let scrapeDataCache = [];
-    let noidaDataCache = [];
-
-    async function fetchScrapeData() {
+    async function fetchGameChart() {
       try {
-        const res = await fetch(api.NewScrapeData.getScrape, {
+        const start = performance.now();
+
+        const res = await fetch(api.NewScrapeData.gameChart, {
           signal: controller.signal,
         });
+
         const json = await res.json();
 
-        scrapeDataCache = json?.data || [];
-
-        // 🔥 merge using BOTH datasets
-        setRows(
-          normalizeGameChartData(
-            scrapeDataCache,
-            noidaDataCache,
-            columns,
-            gameMap
-          )
+        const end = performance.now();
+        console.log(
+          `FRONTEND_TOTAL_TIME: ${(end - start).toFixed(2)} ms`
         );
 
+        if (!json.success) {
+          throw new Error("Game chart API failed");
+        }
+
+        setRows(json.data);
         setLoading(false);
       } catch (err) {
         if (err.name !== "AbortError") {
-          setError("Scrape API failed");
+          setError(err.message || "Failed to load game chart");
           setLoading(false);
         }
       }
     }
 
-    async function fetchNoidaData() {
-      try {
-        const res = await fetch(api.DateNumber.getAll, {
-          signal: controller.signal,
-        });
-        const json = await res.json();
-
-        noidaDataCache = json?.data || [];
-
-        setRows(
-          normalizeGameChartData(
-            scrapeDataCache,
-            noidaDataCache,
-            columns,
-            gameMap
-          )
-        );
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError("Noida API failed");
-        }
-      }
-    }
-
-    fetchScrapeData();
-    fetchNoidaData();
+    fetchGameChart();
 
     return () => controller.abort();
   }, []);

@@ -1,35 +1,53 @@
 import { parseDateToTimestamp } from "../utils/date.utils";
 
+/**
+ * Normalize scrape + noida data into table-ready rows
+ * Optimized for performance (single pass, minimal allocations)
+ */
 export function normalizeGameChartData(
   scrapeData = [],
   noidaData = [],
   columns,
   gameMap
 ) {
-  const map = new Map();
+  const map = Object.create(null);
 
-  const createRow = (date) => {
-    const row = { date, timestamp: parseDateToTimestamp(date) };
-    columns.forEach(col => (row[col] = ""));
+  // 🔥 Pre-build empty column structure ONCE
+  const emptyColumns = {};
+  for (const col of columns) emptyColumns[col] = "";
+
+  function getOrCreateRow(date) {
+    let row = map[date];
+    if (!row) {
+      row = {
+        date,
+        timestamp: parseDateToTimestamp(date),
+        ...emptyColumns,
+      };
+      map[date] = row;
+    }
     return row;
-  };
+  }
 
-  scrapeData.forEach(({ date, gameId, resultNumber }) => {
+  // ✅ Process scraped game data
+  for (let i = 0; i < scrapeData.length; i++) {
+    const { date, gameId, resultNumber } = scrapeData[i];
     const gameName = gameMap[gameId];
-    if (!date || !gameName) return;
+    if (!date || !gameName) continue;
 
-    if (!map.has(date)) map.set(date, createRow(date));
-    map.get(date)[gameName] = String(resultNumber ?? "");
-  });
+    getOrCreateRow(date)[gameName] = String(resultNumber ?? "");
+  }
 
-  noidaData.forEach(({ date, number }) => {
-    if (!date) return;
+  // ✅ Process Noida King data
+  for (let i = 0; i < noidaData.length; i++) {
+    const { date, number } = noidaData[i];
+    if (!date) continue;
 
-    if (!map.has(date)) map.set(date, createRow(date));
-    map.get(date)["NOIDA KING"] = String(number ?? "");
-  });
+    getOrCreateRow(date)["NOIDA KING"] = String(number ?? "");
+  }
 
-  return Array.from(map.values()).sort(
+  // ✅ Sort once (oldest → newest)
+  return Object.values(map).sort(
     (a, b) => a.timestamp - b.timestamp
   );
 }
