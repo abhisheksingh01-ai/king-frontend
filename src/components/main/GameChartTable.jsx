@@ -21,34 +21,48 @@ export default function GameChartTable() {
 
   return (
     <div className="clean-container">
-      <table className="minimal-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            {COLUMNS_FALLBACK.map((col) => (
-              <th key={col}>{col}</th>
-            ))}
-          </tr>
-        </thead>
-
-        <tbody>
-          {rows.length === 0 ? (
+      <div className="table-responsive">
+        <table className="minimal-table">
+          <thead>
             <tr>
-              <td colSpan={COLUMNS_FALLBACK.length + 1}>No data available</td>
+              {/* Header for Date */}
+              <th className="sticky-col first-col-header">Date</th>
+              {COLUMNS_FALLBACK.map((col) => (
+                <th key={col}>{col}</th>
+              ))}
             </tr>
-          ) : (
-            rows.map((row) => (
-              <tr key={row.date}>
-                <td>{row.date}</td>
-                {COLUMNS_FALLBACK.map((col) => {
-                  const game = row.games[col];
-                  return <td key={col}>{game ? game.result : "-"}</td>;
-                })}
+          </thead>
+
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={COLUMNS_FALLBACK.length + 1}>No data available</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              rows.map((row) => (
+                <tr key={row.date}>
+                  {/* Sticky Date Column */}
+                  <td className="sticky-col">{row.date}</td>
+
+                  {COLUMNS_FALLBACK.map((col) => {
+                    const game = row.games[col];
+                    
+                    // Logic: If result exists, show it. If not, show empty string "".
+                    const hasValue = game && game.result && String(game.result).trim() !== "";
+                    const displayValue = hasValue ? game.result : ""; 
+
+                    return (
+                      <td key={col} className="result-cell">
+                        {displayValue}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

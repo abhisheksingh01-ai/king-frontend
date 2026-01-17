@@ -3,15 +3,17 @@ import axios from "axios";
 import { 
   PlusCircle, RefreshCw, Calendar, 
   LayoutDashboard, Database, Activity, CheckCircle2, 
-  Loader2, ArrowUpRight 
+  Loader2, ArrowUpRight, Menu, X
 } from "lucide-react";
 import api from "../../api/api";
 
 const Dashboard = () => {
+  // --- FUNCTIONAL LOGIC (UNCHANGED) ---
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeMessage, setScrapeMessage] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // UI State only
 
   const [formData, setFormData] = useState({ date: "", number: "" });
   const [editData, setEditData] = useState({ date: "", number: "" });
@@ -40,12 +42,12 @@ const Dashboard = () => {
     if (isScraping) return;
     setIsScraping(true);
     setScrapeMessage("");
-    console.log("Creating scrape request..."); // Debug log
+    console.log("Creating scrape request..."); 
 
     try {
       await axios.get(api.NewScrapeData.saveScrape, { withCredentials: true });
       setScrapeMessage("Sync Successful");
-      console.log("Scrape success"); // Debug log
+      console.log("Scrape success"); 
       fetchData();
       setTimeout(() => setScrapeMessage(""), 4000);
     } catch (err) {
@@ -63,17 +65,8 @@ const Dashboard = () => {
 
   // --- AUTOMATED SCRAPER SCHEDULER ---
   useEffect(() => {
-    // ⚠️ IMPORTANT: USE 24-HOUR FORMAT (HH:MM)
-    // Example: 11:40 AM -> "11:40"
-    // Example: 1:40 PM -> "13:40"
      const targetTimes = [
-      "05:59", // Desawer (Target 6:00 AM)
-      "11:59", // Gali (Target 12:00 PM)
-      "14:44", // Delhi Bazar (Target 2:45 PM)
-      "14:59", // Shree Ganesh (Target 3:00 PM)
-      "18:29", // Noida King (Target 6:30 PM)
-      "18:49", // Faridabad (Target 6:50 PM)
-      "22:24"  // Ghaziabad (Target 10:25 PM)
+      "05:59", "11:59", "14:44", "14:59", "18:29", "18:49", "22:24" 
     ];
 
     const intervalId = setInterval(() => {
@@ -82,24 +75,16 @@ const Dashboard = () => {
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const currentTime = `${hours}:${minutes}`;
 
-      // Debug: Check console to see if time is ticking correctly
-      // console.log("Checking time:", currentTime); 
-
       if (targetTimes.includes(currentTime)) {
-        // Only trigger if we haven't run for this specific minute yet
         if (lastRunRef.current !== currentTime) {
           console.log(`⏰ MATCH FOUND: ${currentTime} - Triggering Scrape!`);
-          
-          // Call the latest version of the function via Ref
           if (scrapeFunctionRef.current) {
             scrapeFunctionRef.current();
           }
-
-          // Mark this minute as handled
           lastRunRef.current = currentTime;
         }
       }
-    }, 5000); // Checks every 5 seconds
+    }, 5000); 
 
     return () => clearInterval(intervalId);
   }, []); 
@@ -118,44 +103,73 @@ const Dashboard = () => {
     } catch (err) { alert("Action failed. Check console."); }
   };
 
+  // --- RENDER ---
   return (
-    <div style={ui.container}>
-      {/* Sidebar */}
-      <nav style={ui.sidebar}>
-        <div style={ui.logoSection}>
-          <div style={ui.logoIcon}><Activity size={20} color="#fff" /></div>
-          <span style={ui.logoText}>Nexus DB</span>
+    <div className="app-container">
+      {/* Mobile Header / Sidebar Toggle */}
+      <div className="mobile-header">
+        <div className="logo-section">
+          <div className="logo-icon"><Activity size={20} color="#fff" /></div>
+          <span className="logo-text">Nexus DB</span>
+        </div>
+        <button className="menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Sidebar Navigation */}
+      <nav className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+        <div className="desktop-logo">
+            <div className="logo-section">
+            <div className="logo-icon"><Activity size={20} color="#fff" /></div>
+            <span className="logo-text">Nexus DB</span>
+            </div>
         </div>
         
-        <div style={ui.navLinks}>
-          <div style={ui.activeNavLink}><LayoutDashboard size={18} /> Dashboard</div>
-          <div style={ui.navLink}><Database size={18} /> Scrape Logs</div>
+        {/* NEW IMPROVED NAVIGATION */}
+        <div className="nav-menu">
+          <p className="menu-label">MAIN MENU</p>
+          
+          <button className="nav-item active">
+            <LayoutDashboard size={20} />
+            <span>Dashboard</span>
+            <div className="active-bar"></div>
+          </button>
+
+          <button className="nav-item">
+            <Database size={20} />
+            <span>Scrape Logs</span>
+          </button>
         </div>
 
-        <div style={ui.sidebarBottom}>
-            <p style={ui.systemStatus}>System: Online</p>
+        <div className="sidebar-bottom">
+            <div className="status-indicator">
+                <div className="status-dot"></div>
+                <span>System Online</span>
+            </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main style={ui.main}>
+      <main className="main-content">
         {/* Header Section */}
-        <header style={ui.header}>
-          <div>
-            <h1 style={ui.title}>Analytics Overview</h1>
-            <p style={ui.subtitle}>Manage and monitor your database entries</p>
+        <header className="content-header">
+          <div className="header-text">
+            <h1 className="page-title">Analytics Overview</h1>
+            <p className="page-subtitle">Manage and monitor database entries</p>
           </div>
-          <div style={ui.headerActions}>
+          
+          <div className="header-actions">
             <button 
                 onClick={handleScrape} 
                 disabled={isScraping} 
-                style={isScraping ? ui.btnDisabled : ui.btnSync}
+                className={`btn-sync ${isScraping ? 'disabled' : ''}`}
             >
               {isScraping ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
               {isScraping ? "Syncing..." : "Sync Database"}
             </button>
             {scrapeMessage && (
-              <span style={scrapeMessage.includes("Sync Successful") ? ui.msgSuccess : ui.msgError}>
+              <span className={`status-msg ${scrapeMessage.includes("Success") ? 'success' : 'error'}`}>
                 {scrapeMessage}
               </span>
             )}
@@ -163,119 +177,286 @@ const Dashboard = () => {
         </header>
 
         {/* Stats Grid */}
-        <div style={ui.statsGrid}>
-          <div style={ui.statCard}>
-            <div style={ui.statLabel}>Total Records</div>
-            <div style={ui.statValue}>{list.length}</div>
-            <div style={ui.statTrend}><ArrowUpRight size={14} /> +2 today</div>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-label">Total Records</div>
+            <div className="stat-value">{list.length}</div>
+            <div className="stat-trend"><ArrowUpRight size={14} /> +2 today</div>
           </div>
-          <div style={ui.statCard}>
-            <div style={ui.statLabel}>Last Scrape</div>
-            <div style={ui.statValue}>Just Now</div>
-            <div style={ui.statTrend}><CheckCircle2 size={14} /> Healthy</div>
+          <div className="stat-card">
+            <div className="stat-label">Last Scrape</div>
+            <div className="stat-value">Just Now</div>
+            <div className="stat-trend"><CheckCircle2 size={14} /> Healthy</div>
           </div>
         </div>
 
         {/* Action Forms Area */}
-        <div style={ui.actionArea}>
-          <div style={ui.card}>
-            <h3 style={ui.cardTitle}><PlusCircle size={18} /> New Entry</h3>
-            <form onSubmit={(e) => handleAction(e, 'add')} style={ui.form}>
-              <input style={ui.input} placeholder="Date (DD-MM-YYYY)" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
-              <input style={ui.input} placeholder="Value" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} />
-              <button style={ui.primaryBtn}>Submit Entry</button>
+        <div className="action-grid">
+          <div className="card">
+            <h3 className="card-title"><PlusCircle size={18} className="icon-blue" /> New Entry</h3>
+            <form onSubmit={(e) => handleAction(e, 'add')} className="action-form">
+              <input className="input-field" placeholder="Date (DD-MM-YYYY)" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+              <input className="input-field" placeholder="Value" value={formData.number} onChange={e => setFormData({...formData, number: e.target.value})} />
+              <button className="btn-primary">Submit Entry</button>
             </form>
           </div>
 
-          <div style={ui.card}>
-            <h3 style={ui.cardTitle}><RefreshCw size={18} /> Quick Update</h3>
-            <form onSubmit={(e) => handleAction(e, 'update')} style={ui.form}>
-              <input style={ui.input} placeholder="Target Date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} />
-              <input style={ui.input} placeholder="New Value" value={editData.number} onChange={e => setEditData({...editData, number: e.target.value})} />
-              <button style={ui.secondaryBtn}>Update Row</button>
+          <div className="card">
+            <h3 className="card-title"><RefreshCw size={18} className="icon-blue" /> Quick Update</h3>
+            <form onSubmit={(e) => handleAction(e, 'update')} className="action-form">
+              <input className="input-field" placeholder="Target Date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} />
+              <input className="input-field" placeholder="New Value" value={editData.number} onChange={e => setEditData({...editData, number: e.target.value})} />
+              <button className="btn-secondary">Update Row</button>
             </form>
           </div>
         </div>
 
         {/* Table Area */}
-        <div style={ui.tableWrapper}>
-          <table style={ui.table}>
-            <thead>
-              <tr>
-                <th style={ui.th}>Date</th>
-                <th style={ui.th}>Status</th>
-                <th style={ui.th}>Recorded Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((item, idx) => (
-                <tr key={item._id || idx} style={ui.tr}>
-                  <td style={ui.td}>
-                    <div style={ui.dateCell}><Calendar size={14} /> {item.date}</div>
-                  </td>
-                  <td style={ui.td}>
-                    <span style={ui.badge}><div style={ui.dot} /> Active</span>
-                  </td>
-                  <td style={ui.td}>
-                    <strong style={ui.tableNumber}>{item.number}</strong>
-                  </td>
+        <div className="table-wrapper">
+          <div className="table-scroll">
+            <table className="data-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Recorded Value</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {list.length === 0 && <div style={ui.emptyState}>No data found in database.</div>}
+                </thead>
+                <tbody>
+                {list.map((item, idx) => (
+                    <tr key={item._id || idx}>
+                    <td>
+                        <div className="date-cell"><Calendar size={14} /> {item.date}</div>
+                    </td>
+                    <td>
+                        <span className="badge-active"><div className="dot" /> Active</span>
+                    </td>
+                    <td>
+                        <strong className="value-text">{item.number}</strong>
+                    </td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+          </div>
+          {list.length === 0 && <div className="empty-state">No data found in database.</div>}
         </div>
       </main>
 
+      {/* STYLES */}
       <style>{`
+        :root {
+            --primary: #4318FF;
+            --secondary: #E9EDF7;
+            --text-dark: #1B2559;
+            --text-gray: #A3AED0;
+            --success: #05CD99;
+            --bg: #F4F7FE;
+            --white: #ffffff;
+            --radius: 16px;
+        }
+
+        /* Reset & Base */
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text-dark); }
+        
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        body { margin: 0; background: #f4f7fe; }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- Header & Sidebar --- */
+        .mobile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--white);
+            border-bottom: 1px solid var(--secondary);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        
+        .menu-btn { background: none; border: none; cursor: pointer; color: var(--text-dark); }
+        
+        .sidebar {
+            background: var(--white);
+            border-right: 1px solid var(--secondary);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            position: fixed;
+            top: 60px; /* Below mobile header */
+            left: -100%;
+            width: 100%;
+            height: calc(100vh - 60px);
+            transition: left 0.3s ease;
+            z-index: 40;
+        }
+
+        .sidebar.open { left: 0; }
+        .desktop-logo { display: none; }
+
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 32px; height: 32px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .logo-text { font-size: 20px; font-weight: 800; color: var(--text-dark); }
+
+        /* --- IMPROVED NAV MENU STYLES --- */
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 30px;
+            flex: 1;
+        }
+
+        .menu-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-gray);
+            letter-spacing: 1px;
+            margin: 0 0 8px 12px;
+            opacity: 0.6;
+        }
+
+        .nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-gray);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .nav-item svg { flex-shrink: 0; }
+
+        /* Hover State */
+        .nav-item:hover {
+            background: var(--bg);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        /* Active State */
+        .nav-item.active {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 10px 20px -5px rgba(67, 24, 255, 0.4);
+        }
+        
+        .nav-item.active .active-bar {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px 0 0 4px;
+        }
+
+        .sidebar-bottom { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--secondary); }
+        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--success); font-weight: 600; }
+        .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 0 4px rgba(5, 205, 153, 0.1); }
+
+        /* --- Main Content --- */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+
+        .content-header { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+        .page-title { font-size: 24px; font-weight: 800; margin: 0; color: var(--text-dark); }
+        .page-subtitle { color: var(--text-gray); margin: 4px 0 0 0; font-size: 14px; }
+        
+        .header-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+        .btn-sync { display: flex; align-items: center; gap: 8px; background: var(--white); border: 1px solid transparent; padding: 10px 16px; border-radius: 12px; color: var(--primary); font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: 0.2s; white-space: nowrap; flex: 1; justify-content: center; }
+        .btn-sync:active { transform: scale(0.98); }
+        .btn-sync.disabled { background: var(--secondary); color: var(--text-gray); cursor: not-allowed; }
+        
+        .status-msg { font-size: 12px; font-weight: 700; }
+        .status-msg.success { color: var(--success); }
+        .status-msg.error { color: #EE5D50; }
+
+        /* --- Grid Layouts --- */
+        .stats-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+        .action-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+
+        /* --- Cards --- */
+        .stat-card, .card, .table-wrapper { background: var(--white); padding: 20px; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+        
+        .stat-label { color: var(--text-gray); font-size: 14px; font-weight: 500; }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--text-dark); margin: 8px 0; }
+        .stat-trend { font-size: 13px; color: var(--success); display: flex; align-items: center; gap: 4px; font-weight: 600; }
+
+        .card-title { margin: 0 0 16px 0; font-size: 16px; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+        .icon-blue { color: var(--primary); }
+        
+        .action-form { display: flex; flex-direction: column; gap: 12px; }
+        .input-field { padding: 14px; border-radius: 12px; border: 1px solid var(--secondary); background: var(--bg); outline: none; font-size: 14px; transition: 0.2s; }
+        .input-field:focus { border-color: var(--primary); background: var(--white); }
+        
+        .btn-primary { background: var(--primary); color: var(--white); border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { background: #3311db; }
+        
+        .btn-secondary { background: var(--secondary); color: var(--text-dark); border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-secondary:hover { background: #dce1ef; }
+
+        /* --- Table --- */
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .data-table { width: 100%; border-collapse: collapse; min-width: 500px; } 
+        .data-table th { text-align: left; padding: 12px; border-bottom: 1px solid var(--secondary); color: var(--text-gray); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .data-table td { padding: 16px 12px; border-bottom: 1px solid var(--bg); color: var(--text-dark); font-size: 14px; }
+        
+        .date-cell { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+        .badge-active { display: inline-flex; align-items: center; gap: 6px; background: rgba(5, 205, 153, 0.1); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+        .value-text { color: var(--primary); font-size: 16px; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-gray); font-style: italic; }
+
+        /* --- DESKTOP BREAKPOINT --- */
+        @media (min-width: 1024px) {
+            .app-container { flex-direction: row; }
+            .mobile-header { display: none; }
+            
+            .sidebar { 
+                position: sticky; 
+                top: 0; 
+                left: 0; 
+                width: 280px; 
+                height: 100vh; 
+                padding: 30px; 
+                transform: none; 
+                border-right: 1px solid var(--secondary);
+            }
+            .desktop-logo { display: block; margin-bottom: 40px; }
+            
+            .main-content { padding: 40px; }
+            
+            .content-header { flex-direction: row; justify-content: space-between; align-items: center; }
+            .header-actions { width: auto; }
+            .btn-sync { flex: unset; }
+
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+            .action-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+            
+            .page-title { font-size: 32px; }
+        }
       `}</style>
     </div>
   );
-};
-
-const ui = {
-  container: { display: "flex", minHeight: "100vh", fontFamily: "'Plus Jakarta Sans', sans-serif" },
-  sidebar: { width: "260px", background: "#fff", borderRight: "1px solid #e9edf7", padding: "24px", display: "flex", flexDirection: "column" },
-  logoSection: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "40px" },
-  logoIcon: { width: "32px", height: "32px", background: "#4318FF", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" },
-  logoText: { fontSize: "20px", fontWeight: "bold", color: "#1B2559" },
-  navLinks: { display: "flex", flexDirection: "column", gap: "8px" },
-  activeNavLink: { display: "flex", alignItems: "center", gap: "12px", background: "#F4F7FE", color: "#4318FF", padding: "12px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer" },
-  navLink: { display: "flex", alignItems: "center", gap: "12px", color: "#A3AED0", padding: "12px", borderRadius: "12px", fontWeight: "500", cursor: "pointer" },
-  main: { flex: 1, padding: "40px", backgroundColor: "#F4F7FE" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "30px" },
-  title: { fontSize: "32px", fontWeight: "800", color: "#1B2559", margin: 0 },
-  subtitle: { color: "#A3AED0", marginTop: "4px" },
-  headerActions: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" },
-  btnSync: { display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "none", padding: "10px 20px", borderRadius: "12px", color: "#4318FF", fontWeight: "bold", cursor: "pointer", boxShadow: "0px 10px 20px rgba(0,0,0,0.05)" },
-  btnDisabled: { display: "flex", alignItems: "center", gap: "8px", background: "#E9EDF7", border: "none", padding: "10px 20px", borderRadius: "12px", color: "#A3AED0", cursor: "not-allowed" },
-  msgSuccess: { color: "#05CD99", fontSize: "12px", fontWeight: "bold" },
-  msgError: { color: "#EE5D50", fontSize: "12px", fontWeight: "bold" },
-  statsGrid: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px", marginBottom: "30px" },
-  statCard: { background: "#fff", padding: "20px", borderRadius: "20px", boxShadow: "0px 4px 12px rgba(0,0,0,0.02)" },
-  statLabel: { color: "#A3AED0", fontSize: "14px", fontWeight: "500" },
-  statValue: { fontSize: "24px", fontWeight: "800", color: "#1B2559", margin: "4px 0" },
-  statTrend: { fontSize: "12px", color: "#05CD99", display: "flex", alignItems: "center", gap: "4px" },
-  actionArea: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "30px" },
-  card: { background: "#fff", padding: "24px", borderRadius: "20px" },
-  cardTitle: { margin: "0 0 20px 0", fontSize: "18px", color: "#1B2559", display: "flex", alignItems: "center", gap: "10px" },
-  form: { display: "flex", flexDirection: "column", gap: "12px" },
-  input: { padding: "12px 16px", borderRadius: "12px", border: "1px solid #E9EDF7", background: "#F4F7FE", outline: "none" },
-  primaryBtn: { background: "#4318FF", color: "#fff", border: "none", padding: "12px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer" },
-  secondaryBtn: { background: "#E9EDF7", color: "#1B2559", border: "none", padding: "12px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer" },
-  tableWrapper: { background: "#fff", borderRadius: "20px", padding: "20px" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: { textAlign: "left", padding: "12px", borderBottom: "1px solid #F4F7FE", color: "#A3AED0", fontSize: "12px", textTransform: "uppercase" },
-  tr: { borderBottom: "1px solid #F4F7FE" },
-  td: { padding: "16px 12px", color: "#1B2559", fontSize: "14px" },
-  dateCell: { display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" },
-  badge: { display: "flex", alignItems: "center", gap: "6px", background: "#05CD991A", color: "#05CD99", padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold", width: "fit-content" },
-  dot: { width: "6px", height: "6px", background: "#05CD99", borderRadius: "50%" },
-  tableNumber: { fontSize: "16px", color: "#4318FF" },
-  emptyState: { padding: "40px", textAlign: "center", color: "#A3AED0" }
 };
 
 export default Dashboard;
