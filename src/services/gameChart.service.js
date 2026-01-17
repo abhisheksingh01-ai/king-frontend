@@ -1,53 +1,41 @@
-import { parseDateToTimestamp } from "../utils/date.utils";
+import { parseDateToTimestamp, formatISTTime } from "../utils/date.utils";
 
 /**
- * Normalize scrape + noida data into table-ready rows
- * Optimized for performance (single pass, minimal allocations)
+ * Normalize backend data into table-ready rows
+ * Supports new nested 'games' structure
  */
-export function normalizeGameChartData(
-  scrapeData = [],
-  noidaData = [],
-  columns,
-  gameMap
-) {
+export function normalizeGameChartData(rawData = [], columns = []) {
   const map = Object.create(null);
 
-  // 🔥 Pre-build empty column structure ONCE
-  const emptyColumns = {};
-  for (const col of columns) emptyColumns[col] = "";
-
   function getOrCreateRow(date) {
-    let row = map[date];
-    if (!row) {
-      row = {
+    if (!map[date]) {
+      map[date] = {
         date,
-        timestamp: parseDateToTimestamp(date),
-        ...emptyColumns,
+        games: {},
+        // Convert DD-MM-YYYY to a proper timestamp for stable sorting
+        timestamp: parseDateToTimestamp(date) || 0,
       };
-      map[date] = row;
     }
-    return row;
+    return map[date];
   }
 
-  // ✅ Process scraped game data
-  for (let i = 0; i < scrapeData.length; i++) {
-    const { date, gameId, resultNumber } = scrapeData[i];
-    const gameName = gameMap[gameId];
-    if (!date || !gameName) continue;
+  for (const { date, games } of rawData) {
+    if (!date || !games) continue;
+    const row = getOrCreateRow(date);
 
-    getOrCreateRow(date)[gameName] = String(resultNumber ?? "");
+    for (const col of columns) {
+      const game = games[col];
+      if (game) {
+        row.games[col] = {
+          result: game.result,
+          createdAt: game.createdAt,
+          timestamp: game.timestamp,
+          timeIST: formatISTTime(game.createdAt),
+        };
+      }
+    }
   }
 
-  // ✅ Process Noida King data
-  for (let i = 0; i < noidaData.length; i++) {
-    const { date, number } = noidaData[i];
-    if (!date) continue;
-
-    getOrCreateRow(date)["NOIDA KING"] = String(number ?? "");
-  }
-
-  // ✅ Sort once (oldest → newest)
-  return Object.values(map).sort(
-    (a, b) => a.timestamp - b.timestamp
-  );
+  // FIXED: Sort rows strictly by the row's date timestamp (01-01, 02-01, etc.)
+  return Object.values(map).sort((a, b) => a.timestamp - b.timestamp);
 }

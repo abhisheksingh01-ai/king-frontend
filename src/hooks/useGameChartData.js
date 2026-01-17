@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
+import { normalizeGameChartData } from "../services/gameChart.service";
+
+const COLUMNS = [
+  "DESAWAR",
+  "SHRI GANESH",
+  "DELHI BAZAR",
+  "GALI",
+  "GHAZIABAD",
+  "FARIDABAD",
+  "NOIDA KING",
+];
 
 export function useGameChartData() {
   const [rows, setRows] = useState([]);
@@ -11,24 +22,15 @@ export function useGameChartData() {
 
     async function fetchGameChart() {
       try {
-        const start = performance.now();
-
         const res = await fetch(api.NewScrapeData.gameChart, {
           signal: controller.signal,
         });
-
         const json = await res.json();
 
-        const end = performance.now();
-        console.log(
-          `FRONTEND_TOTAL_TIME: ${(end - start).toFixed(2)} ms`
-        );
+        if (!json.success) throw new Error("Game chart API failed");
 
-        if (!json.success) {
-          throw new Error("Game chart API failed");
-        }
-
-        setRows(json.data);
+        const normalized = normalizeGameChartData(json.data, COLUMNS);
+        setRows(normalized);
         setLoading(false);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -39,9 +41,8 @@ export function useGameChartData() {
     }
 
     fetchGameChart();
-
     return () => controller.abort();
   }, []);
 
-  return { rows, loading, error };
+  return { rows, loading, error, columns: COLUMNS };
 }

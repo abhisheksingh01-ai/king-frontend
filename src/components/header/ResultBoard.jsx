@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/api";
 
-/* ---------- GAME ORDER (example, does not matter for time now) ---------- */
+/* ---------- GAME ORDER ---------- */
 const GAMES = [
   "DESAWAR",
   "SHRI GANESH",
@@ -14,11 +14,14 @@ const GAMES = [
 
 /* ---------- HELPERS ---------- */
 const formatDate = (d) =>
-  `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+  `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${d.getFullYear()}`;
 
 export default function ResultBoard() {
   const today = formatDate(new Date());
-  const [results, setResults] = useState([]); 
+  const [results, setResults] = useState([]);
 
   const updateResults = async () => {
     try {
@@ -28,23 +31,27 @@ export default function ResultBoard() {
       if (!resJson?.success || !resJson?.data) return;
 
       const todayRow = resJson.data.find((row) => row.date === today);
-      if (!todayRow) return;
+      if (!todayRow || !todayRow.games) return;
 
-      // Collect all game results that are not empty
-      const newResults = GAMES.map((game) => {
-        const num = todayRow[game];
-        return num ? { name: game, number: num } : null;
-      }).filter(Boolean); // remove nulls
+      // Collect all games that have a result, with timestamp
+      const allGames = GAMES.map((game) => {
+        const gameData = todayRow.games[game];
+        if (!gameData) return null;
+        return {
+          name: game,
+          number: gameData.result,
+          timestamp: new Date(gameData.createdAt).getTime(),
+        };
+      }).filter(Boolean);
 
-      if (newResults.length === 0) return;
+      if (allGames.length === 0) return;
 
-      // Combine previous results with new ones and remove duplicates
-      const combined = [...newResults, ...results].filter(
-        (v, i, arr) => arr.findIndex((x) => x.name === v.name) === i
-      );
+      // Sort descending by timestamp (latest first) and pick top 3
+      const latestThree = allGames
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 3);
 
-      // Keep only latest 3 results
-      setResults(combined.slice(0, 3));
+      setResults(latestThree);
     } catch (err) {
       console.error("❌ ResultBoard Error:", err);
     }
@@ -54,7 +61,7 @@ export default function ResultBoard() {
     updateResults(); // initial fetch
     const interval = setInterval(updateResults, 60 * 1000); // update every minute
     return () => clearInterval(interval);
-  }, [today, results]);
+  }, [today]);
 
   return (
     <div className="w-full flex justify-center my-10">
@@ -68,14 +75,18 @@ export default function ResultBoard() {
 
           <div className="space-y-6">
             {results.length === 0 ? (
-              <p className="text-white font-bold text-2xl">Waiting for results...</p>
+              <p className="text-white font-bold text-2xl">
+                Waiting for results...
+              </p>
             ) : (
-              results.map((item, idx) => (
+              results.map((item) => (
                 <section key={item.name}>
                   <h3 className="text-3xl font-extrabold text-white tracking-wider uppercase">
                     {item.name}
                   </h3>
-                  <p className="text-yellow-300 text-5xl font-bold mt-1">{item.number}</p>
+                  <p className="text-yellow-300 text-5xl font-bold mt-1">
+                    {item.number}
+                  </p>
                 </section>
               ))
             )}

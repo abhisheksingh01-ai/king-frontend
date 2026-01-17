@@ -12,7 +12,6 @@ const GAMES = [
   { key: "NOIDA KING", time: "(06:30 PM)" },
 ];
 
-
 const formatDate = (d) =>
   `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(
     2,
@@ -96,13 +95,16 @@ export default function ResultsTable() {
 
         if (!json.success) return;
 
+        // ✅ Updated to access nested 'games' object
         const todayRow = json.data.find((r) => r.date === TODAY);
         const yesterdayRow = json.data.find((r) => r.date === YESTERDAY);
 
         const merged = defaultRows.map((row) => ({
           ...row,
-          today: todayRow?.[row.place] || "-",
-          last: yesterdayRow?.[row.place] || "-",
+          today:
+            todayRow?.games?.[row.place]?.result ?? "-", // <-- updated
+          last:
+            yesterdayRow?.games?.[row.place]?.result ?? "-", // <-- updated
         }));
 
         setRows(merged);

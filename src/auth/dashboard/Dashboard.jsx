@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { 
-  PlusCircle, RefreshCw, Calendar, Hash, 
+  PlusCircle, RefreshCw, Calendar, 
   LayoutDashboard, Database, Activity, CheckCircle2, 
-  AlertCircle, Loader2, ArrowUpRight 
+  Loader2, ArrowUpRight 
 } from "lucide-react";
 import api from "../../api/api";
 
@@ -15,6 +15,10 @@ const Dashboard = () => {
 
   const [formData, setFormData] = useState({ date: "", number: "" });
   const [editData, setEditData] = useState({ date: "", number: "" });
+
+  // Ref to track execution and current function state
+  const lastRunRef = useRef(null);
+  const scrapeFunctionRef = useRef(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -33,19 +37,72 @@ const Dashboard = () => {
   }, []);
 
   const handleScrape = async () => {
+    if (isScraping) return;
     setIsScraping(true);
     setScrapeMessage("");
+    console.log("Creating scrape request..."); // Debug log
+
     try {
       await axios.get(api.NewScrapeData.saveScrape, { withCredentials: true });
       setScrapeMessage("Sync Successful");
+      console.log("Scrape success"); // Debug log
       fetchData();
       setTimeout(() => setScrapeMessage(""), 4000);
     } catch (err) {
+      console.error("Scrape failed", err);
       setScrapeMessage("Sync Failed");
     } finally {
       setIsScraping(false);
     }
   };
+
+  // KEEP THE REF UPDATED WITH THE LATEST FUNCTION
+  useEffect(() => {
+    scrapeFunctionRef.current = handleScrape;
+  });
+
+  // --- AUTOMATED SCRAPER SCHEDULER ---
+  useEffect(() => {
+    // ⚠️ IMPORTANT: USE 24-HOUR FORMAT (HH:MM)
+    // Example: 11:40 AM -> "11:40"
+    // Example: 1:40 PM -> "13:40"
+     const targetTimes = [
+      "05:59", // Desawer (Target 6:00 AM)
+      "11:59", // Gali (Target 12:00 PM)
+      "14:44", // Delhi Bazar (Target 2:45 PM)
+      "14:59", // Shree Ganesh (Target 3:00 PM)
+      "18:29", // Noida King (Target 6:30 PM)
+      "18:49", // Faridabad (Target 6:50 PM)
+      "22:24"  // Ghaziabad (Target 10:25 PM)
+    ];
+
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTime = `${hours}:${minutes}`;
+
+      // Debug: Check console to see if time is ticking correctly
+      // console.log("Checking time:", currentTime); 
+
+      if (targetTimes.includes(currentTime)) {
+        // Only trigger if we haven't run for this specific minute yet
+        if (lastRunRef.current !== currentTime) {
+          console.log(`⏰ MATCH FOUND: ${currentTime} - Triggering Scrape!`);
+          
+          // Call the latest version of the function via Ref
+          if (scrapeFunctionRef.current) {
+            scrapeFunctionRef.current();
+          }
+
+          // Mark this minute as handled
+          lastRunRef.current = currentTime;
+        }
+      }
+    }, 5000); // Checks every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, []); 
 
   const handleAction = async (e, type) => {
     e.preventDefault();
