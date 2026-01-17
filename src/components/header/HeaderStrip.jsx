@@ -1,32 +1,44 @@
-import React from 'react'
+import React from "react";
 
 function HeaderStrip() {
+  const games = [
+    "DESAWAR",
+    "SHRI GANESH",
+    "DELHI BAZAR",
+    "GALI",
+    "GHAZIABAD",
+    "FARIDABAD",
+    "NOIDA KING",
+  ];
+
+  // create long continuous text
+  const text = [...games, ...games, ...games]
+    .map(item => `${item} RESULT`)
+    .join("  •  ");
+
   return (
     <>
       <style>
         {`
-          @keyframes scroll {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+          @keyframes scrollLeft {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
           }
-          .animate-scroll {
+          .scroll-text {
             display: inline-block;
-            animation: scroll 18s linear infinite;
             white-space: nowrap;
+            animation: scrollLeft 35s linear infinite;
           }
         `}
       </style>
 
       <div className="bg-black text-white text-sm py-2 border-b-4 border-dotted border-red-600 overflow-hidden">
-        <h1 className="animate-scroll">
-          Satta king, Sattaking, Satta king, Satta result, Satta king result, Satta king live,
-          Satta king online, Desawar result, Gali result, Faridabad result, Gaziyabad result,
-          Satta king chart, Desawar record chart, Gali record chart, Faridabad record chart,
-          Gaziyabad record chart
-        </h1>
+        <div className="scroll-text">
+          {text}
+        </div>
       </div>
     </>
-  )
+  );
 }
 
-export default HeaderStrip
+export default HeaderStrip;
