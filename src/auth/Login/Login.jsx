@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react"; // Modern Icons
+import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react"; 
 import api from "../../api/api"; 
 
 const Login = () => {
@@ -24,10 +24,27 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // 1. Send Login Request
       const res = await axios.post(api.Auth.login, formData, { withCredentials: true });
-      setSuccess("Success! Redirecting...");
-      setTimeout(() => navigate("/hidden-dashboard"), 1500);
+
+      // ---------------------------------------------------------
+      // ✅ THE FIX: Manually set the Admin Flag on success
+      // ---------------------------------------------------------
+      
+      // Ideally, you should check if res.data.role === 'admin' here 
+      // if your backend returns it. For now, we assume anyone who 
+      // logs into this specific hidden page is an admin.
+      localStorage.setItem("isAdminLoggedIn", "true");
+      
+      setSuccess("Login Successful! Access Granted.");
+
+      // 2. Redirect after 1.5 seconds
+      setTimeout(() => {
+        navigate("/hidden-dashboard");
+      }, 1500);
+
     } catch (err) {
+      console.error("Login Error:", err);
       setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
@@ -36,7 +53,6 @@ const Login = () => {
 
   return (
     <div style={uiStyles.page}>
-      {/* Background Decorative Blobs */}
       <div style={uiStyles.blob1}></div>
       <div style={uiStyles.blob2}></div>
 
@@ -45,15 +61,14 @@ const Login = () => {
           <div style={uiStyles.logoIcon}>
             <Lock size={24} color="#4f46e5" />
           </div>
-          <h2 style={uiStyles.title}>Secure Login</h2>
-          <p style={uiStyles.subtitle}>Enter your credentials to access the scraper</p>
+          <h2 style={uiStyles.title}>Admin Panel</h2>
+          <p style={uiStyles.subtitle}>Secure access only</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {error && <div style={uiStyles.errorBadge}>{error}</div>}
           {success && <div style={uiStyles.successBadge}>{success}</div>}
 
-          {/* Email Input */}
           <div style={uiStyles.inputGroup}>
             <label style={uiStyles.label}>Email Address</label>
             <div style={uiStyles.inputWrapper}>
@@ -61,7 +76,7 @@ const Login = () => {
               <input
                 type="email"
                 name="email"
-                placeholder="you@example.com"
+                placeholder="admin@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -70,7 +85,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Password Input */}
           <div style={uiStyles.inputGroup}>
             <label style={uiStyles.label}>Password</label>
             <div style={uiStyles.inputWrapper}>
@@ -102,18 +116,15 @@ const Login = () => {
                 backgroundColor: loading ? "#818cf8" : "#4f46e5"
             }}
           >
-            {loading ? <Loader2 style={uiStyles.spin} size={20} /> : "Sign In"}
+            {loading ? <Loader2 style={uiStyles.spin} size={20} /> : "Login to Dashboard"}
           </button>
         </form>
-
-        <p style={uiStyles.footerText}>
-          Don't have an account? <span style={uiStyles.link}>Contact Admin</span>
-        </p>
       </div>
     </div>
   );
 };
 
+/* --- Keep your existing UI Styles below --- */
 const uiStyles = {
   page: {
     minHeight: "100vh",
@@ -209,17 +220,8 @@ const uiStyles = {
   },
   errorBadge: { padding: "12px", backgroundColor: "#fef2f2", color: "#dc2626", borderRadius: "8px", fontSize: "13px", marginBottom: "16px", border: "1px solid #fecaca" },
   successBadge: { padding: "12px", backgroundColor: "#f0fdf4", color: "#16a34a", borderRadius: "8px", fontSize: "13px", marginBottom: "16px", border: "1px solid #bbf7d0" },
-  footerText: { textAlign: "center", fontSize: "14px", color: "#64748b", marginTop: "24px" },
   link: { color: "#4f46e5", fontWeight: "600", cursor: "pointer" },
   spin: { animation: "spin 1s linear infinite" }
 };
-
-// Add this to your Global CSS or index.css for the loading spinner animation:
-/*
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-*/
 
 export default Login;

@@ -1,24 +1,26 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // 1. Added Import
 import { 
   PlusCircle, RefreshCw, Calendar, 
   LayoutDashboard, Database, Activity, CheckCircle2, 
-  Loader2, ArrowUpRight, Menu, X
+  Loader2, ArrowUpRight, Menu, X, LogOut // 2. Added LogOut Icon
 } from "lucide-react";
 import api from "../../api/api";
 
 const Dashboard = () => {
+  const navigate = useNavigate(); // 3. Initialize Navigation
+
   // --- FUNCTIONAL LOGIC (UNCHANGED) ---
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeMessage, setScrapeMessage] = useState("");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // UI State only
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   const [formData, setFormData] = useState({ date: "", number: "" });
   const [editData, setEditData] = useState({ date: "", number: "" });
 
-  // Ref to track execution and current function state
   const lastRunRef = useRef(null);
   const scrapeFunctionRef = useRef(null);
 
@@ -58,12 +60,10 @@ const Dashboard = () => {
     }
   };
 
-  // KEEP THE REF UPDATED WITH THE LATEST FUNCTION
   useEffect(() => {
     scrapeFunctionRef.current = handleScrape;
   });
 
-  // --- AUTOMATED SCRAPER SCHEDULER ---
   useEffect(() => {
      const targetTimes = [
       "05:59", "11:59", "14:44", "14:59", "18:29", "18:49", "22:24" 
@@ -103,6 +103,14 @@ const Dashboard = () => {
     } catch (err) { alert("Action failed. Check console."); }
   };
 
+  // 4. ADDED LOGOUT FUNCTION
+  const handleLogout = () => {
+    // Remove the Admin Key
+    localStorage.removeItem("isAdminLoggedIn");
+    // Redirect to Login
+    navigate("/hidden-login");
+  };
+
   // --- RENDER ---
   return (
     <div className="app-container">
@@ -126,7 +134,6 @@ const Dashboard = () => {
             </div>
         </div>
         
-        {/* NEW IMPROVED NAVIGATION */}
         <div className="nav-menu">
           <p className="menu-label">MAIN MENU</p>
           
@@ -139,6 +146,12 @@ const Dashboard = () => {
           <button className="nav-item">
             <Database size={20} />
             <span>Scrape Logs</span>
+          </button>
+
+          {/* 5. ADDED LOGOUT BUTTON IN MENU */}
+          <button className="nav-item logout" onClick={handleLogout}>
+            <LogOut size={20} />
+            <span>Sign Out</span>
           </button>
         </div>
 
@@ -350,6 +363,12 @@ const Dashboard = () => {
             background: var(--bg);
             color: var(--primary);
             transform: translateX(4px);
+        }
+
+        /* 6. LOGOUT BUTTON HOVER RED */
+        .nav-item.logout:hover {
+            background: #FFF1F1;
+            color: #E03137;
         }
 
         /* Active State */
