@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../../api/api";
 
 /* ---------- CONFIG ---------- */
 const GAMES = [
-  { key: "DESAWAR", time: "(06:00 AM)" },
-  { key: "SHRI GANESH", time: "(03:00 PM)" },
-  { key: "DELHI BAZAR", time: "(02:45 PM)" },
-  { key: "GALI", time: "(12:00 PM)" },
-  { key: "GHAZIABAD", time: "(10:25 PM)" },
-  { key: "FARIDABAD", time: "(06:50 PM)" },
-  { key: "NOIDA KING", time: "(06:30 PM)" },
+  { key: "DESAWAR", time: "(05:30 AM)" },
+  { key: "SHRI GANESH", time: "(04:40 PM)" },
+  { key: "DELHI BAZAR", time: "(03:15 PM)" },
+  { key: "GALI", time: "(11:10 PM)" },
+  { key: "GHAZIABAD", time: "(08:50 PM)" },
+  { key: "FARIDABAD", time: "(06:15 PM)" },
+  { key: "NOIDA KING", time: "(05:30 PM)" },
 ];
 
 const formatDate = (d) =>
@@ -19,34 +19,22 @@ const formatDate = (d) =>
   )}-${d.getFullYear()}`;
 
 const TODAY = formatDate(new Date());
-const YESTERDAY = formatDate(new Date(Date.now() - 86400000));
+// Handle timezone offset effectively or just subtract 24h safely
+const YESTERDAY = formatDate(new Date(Date.now() - 86400000)); 
 
 /* ---------- CSS ANIMATION & STYLES ---------- */
 const styles = `
-  /* Define the glossy red gradient for the arrow */
   .glossy-gradient-stop-1 { stop-color: #ff4d4d; }
   .glossy-gradient-stop-2 { stop-color: #b30000; }
 
-  /* Animation: Point right and Pulse */
   @keyframes pointAndPulse {
-    0% {
-      transform: translateX(0) scale(1);
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-    }
-    50% {
-      /* Moves right and gets slightly larger */
-      transform: translateX(4px) scale(1.05);
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
-    }
-    100% {
-      transform: translateX(0) scale(1);
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-    }
+    0% { transform: translateX(0) scale(1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
+    50% { transform: translateX(4px) scale(1.05); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+    100% { transform: translateX(0) scale(1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
   }
 
   .animated-badge {
     animation: pointAndPulse 1.5s ease-in-out infinite;
-    /* Ensure the SVG renders sharply */
     shape-rendering: geometricPrecision; 
   }
 `;
@@ -54,46 +42,29 @@ const styles = `
 /* ---------- UI PARTS ---------- */
 
 const ArrowBadge = React.memo(() => (
-  // "mt-[1px]" forces the whole element 1px down as requested
   <div className="flex items-center justify-center px-2 shrink-0 relative z-10 mt-px">
     <style>{styles}</style>
-    
-    <svg
-      width="40"
-      height="18"
-      viewBox="0 0 42 18"
-      className="animated-badge"
-    >
+    <svg width="40" height="18" viewBox="0 0 42 18" className="animated-badge">
       <defs>
-        {/* Gradient Definition for 3D look */}
         <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" className="glossy-gradient-stop-1" />
           <stop offset="100%" className="glossy-gradient-stop-2" />
         </linearGradient>
-        {/* Text Shadow Filter */}
         <filter id="textShadow">
           <feDropShadow dx="0" dy="1" stdDeviation="0.5" floodColor="rgba(0,0,0,0.5)" />
         </filter>
       </defs>
-
-      {/* Outer Border (Gold) */}
       <path d="M0 0H35L42 9L35 18H0V0Z" fill="#FDE047" />
-      
-      {/* Inner Main Arrow (Gradient Red) */}
       <path 
         d="M1.5 1.5H34.5L40 9L34.5 16.5H1.5V1.5Z" 
         fill="url(#badgeGradient)" 
         stroke="#7f1d1d" 
         strokeWidth="0.5" 
       />
-
-      {/* Text "NEW" with shadow */}
       <text
-        x="19"
-        y="13"
+        x="19" y="13"
         fill="#FFFFFF"
-        fontSize="10"
-        fontWeight="900"
+        fontSize="10" fontWeight="900"
         textAnchor="middle"
         filter="url(#textShadow)"
         style={{ letterSpacing: '0.5px' }}
@@ -104,19 +75,18 @@ const ArrowBadge = React.memo(() => (
   </div>
 ));
 
-const ValueBox = ({ label, value }) => (
+const ValueBox = React.memo(({ label, value }) => (
   <div className="flex flex-col items-center">
     <span className="text-white text-[10px] uppercase tracking-wider font-bold mb-1 opacity-90">
       {label}
     </span>
-    {/* Circle Container */}
     <div className="bg-white min-w-12 h-8 px-2 rounded-full flex justify-center items-center shadow-lg border border-gray-200">
       <span className="text-black font-black text-lg leading-none">
         {value}
       </span>
     </div>
   </div>
-);
+));
 
 const RowItem = React.memo(({ row }) => (
   <div className="py-4 flex flex-col items-center border-b border-black/30 last:border-b-0 md:border-b md:nth-last-child-2:border-b-0">
@@ -129,7 +99,6 @@ const RowItem = React.memo(({ row }) => (
     
     <div className="flex items-center justify-center gap-2 w-full">
       <ValueBox label="Last" value={row.last} />
-      {/* The Badge is inside here */}
       <ArrowBadge />
       <ValueBox label="Today" value={row.today} />
     </div>
@@ -139,59 +108,65 @@ const RowItem = React.memo(({ row }) => (
 /* ---------- MAIN ---------- */
 
 export default function ResultsTable() {
-  const defaultRows = useMemo(
-    () =>
-      GAMES.map((g) => ({
-        place: g.key,
-        time: g.time,
-        today: "",
-        last: "",
-      })),
-    []
+  const [rows, setRows] = useState(() => 
+    GAMES.map((g) => ({
+      place: g.key,
+      time: g.time,
+      today: "",
+      last: "",
+    }))
   );
 
-  const [rows, setRows] = useState(defaultRows);
-
   useEffect(() => {
-    const controller = new AbortController();
+    let mounted = true;
 
     const fetchResults = async () => {
       try {
-        const start = performance.now();
-        const res = await fetch(api.NewScrapeData.gameChart, {
-          signal: controller.signal,
-        });
+        // 🔥 Use the new optimized cache-enabled endpoint
+        const res = await fetch(api.NewScrapeData.gameChart);
+        
+        if (!res.ok) throw new Error("Fetch failed");
+        
         const json = await res.json();
-        const end = performance.now();
-        console.log(`RESULTS_TIME: ${(end - start).toFixed(2)} ms`);
+        
+        if (!mounted || !json.success || !Array.isArray(json.data)) return;
 
-        if (!json.success) return;
+        // Optimization: Find rows once using Map O(1) instead of Array.find O(N)
+        // Since the array is sorted by date, Today is likely at the end.
+        // But a simple map lookup is safest.
+        
+        const dataMap = new Map();
+        // Just grab the last 5 days to be safe, no need to map 365 days
+        const recentData = json.data.slice(-5); 
+        
+        recentData.forEach(r => dataMap.set(r.date, r));
 
-        const todayRow = json.data.find((r) => r.date === TODAY);
-        const yesterdayRow = json.data.find((r) => r.date === YESTERDAY);
+        const todayRow = dataMap.get(TODAY);
+        const yesterdayRow = dataMap.get(YESTERDAY);
 
-        const merged = defaultRows.map((row) => {
-          const getVal = (sourceObj) => {
-            const val = sourceObj?.games?.[row.place]?.result;
-            return val && String(val).trim() !== "" ? val : "";
-          };
+        setRows((prevRows) => 
+          prevRows.map((row) => {
+            const getVal = (sourceObj) => {
+              if (!sourceObj || !sourceObj.games) return "";
+              const val = sourceObj.games[row.place]?.result;
+              return val && String(val).trim() !== "" ? val : "";
+            };
 
-          return {
-            ...row,
-            today: getVal(todayRow),
-            last: getVal(yesterdayRow),
-          };
-        });
-
-        setRows(merged);
+            return {
+              ...row,
+              today: getVal(todayRow),
+              last: getVal(yesterdayRow),
+            };
+          })
+        );
       } catch (err) {
-        if (err.name !== "AbortError") console.error("API Error", err);
+        console.error("Results API Error", err);
       }
     };
 
     fetchResults();
-    return () => controller.abort();
-  }, [defaultRows]);
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-[#002e00] p-3 md:p-6 font-sans overflow-x-hidden">
