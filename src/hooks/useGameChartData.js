@@ -22,17 +22,19 @@ export function useGameChartData() {
 
     async function fetchGameChart() {
       try {
-        // Browser handles caching via Cache-Control header we added in Backend
         const res = await fetch(api.NewScrapeData.gameChart);
         
-        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        // Debug Log: Check if API call is actually working
+        if (!res.ok) {
+           console.error("API Response Error:", res.status);
+           throw new Error(`API Error: ${res.status}`);
+        }
         
         const json = await res.json();
 
         if (mounted) {
           if (!json.success) throw new Error("Game chart API failed");
           
-          // 🔥 Fast: No heavy processing here anymore
           const data = normalizeGameChartData(json.data);
           setRows(data);
           setLoading(false);
@@ -53,7 +55,6 @@ export function useGameChartData() {
     };
   }, []);
 
-  // Memoize columns to prevent unnecessary re-renders in consumers
   const columns = useMemo(() => STATIC_COLUMNS, []);
 
   return { rows, loading, error, columns };
