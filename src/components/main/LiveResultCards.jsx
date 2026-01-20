@@ -59,8 +59,8 @@ const LiveResultCards = () => {
     
     GAMES_CONFIG.forEach(game => {
       mappedResults[game.key] = {
-        today: todayData?.games?.[game.key]?.result || "", // Result ya Empty
-        last: yesterdayData?.games?.[game.key]?.result || "XX" // Result ya "XX"
+        today: todayData?.games?.[game.key]?.result || "", 
+        last: yesterdayData?.games?.[game.key]?.result || "" 
       };
     });
 
@@ -100,7 +100,7 @@ const LiveResultCards = () => {
                   <span className="text-green-100 text-xs font-bold uppercase tracking-widest">Last</span>
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.3)] border-4 border-gray-200">
                     <span className="text-3xl font-extrabold text-gray-800">
-                      {results[game.key]?.last || "--"}
+                      {results[game.key]?.last || ""}
                     </span>
                   </div>
                 </div>
