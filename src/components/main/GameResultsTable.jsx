@@ -143,7 +143,7 @@ const GameResultsTable = () => {
                           {result ? (
                             <span className="scale-100 block">{result}</span>
                           ) : (
-                            <span className="text-gray-300 text-[10px]">•</span>
+                            <span className="text-gray-300 text-[10px]"></span>
                           )}
                         </td>
                       );
