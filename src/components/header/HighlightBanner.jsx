@@ -35,7 +35,7 @@ function HighlightBanner() {
 
             {/* Main Title with "Shine" Animation */}
             <h2 className="relative text-2xl md:text-3xl font-black italic tracking-wider uppercase text-white">
-              <span className="absolute inset-0 text-transparent bg-clip-text bg-linear-to-r from-yellow-300 via-white to-yellow-300 animate-[shimmer_2s_infinite] bg-[length:200%_100%]">
+              <span className="absolute inset-0 text-transparent bg-clip-text bg-linear-to-r from-yellow-300 via-white to-yellow-300 animate-[shimmer_2s_infinite] bg-size-[200%_100%]">
                 SATTA KING
               </span>
               <span className="text-transparent bg-clip-text bg-linear-to-b from-yellow-300 to-yellow-700">
