@@ -4,14 +4,18 @@ import { useLocation } from "react-router-dom";
 import Navbar from "../components/header/Navbar";
 import HeaderStrip from "../components/header/HeaderStrip";
 import HighlightBanner from "../components/header/HighlightBanner";
-import ResultBoard from "../components/header/ResultBoard";
-import ResultsTable from "../components/main/ResultsTable";
 import WhatsAppButton from "../components/main/WhatsAppButton";
-import GameChartTable from "../components/main/GameChartTable";
-import Ads from "../components/ads/Ads"; // Your existing bottom ads
+import Ads from "../components/ads/Ads"; 
+
 
 // Import the new Realistic Banner Component
 import BannerAd from "../components/ads/BannerAd";
+import GameResultsTable from "../components/main/GameResultsTable";
+import LiveResultCards from "../components/main/LiveResultCards";
+import RecentResultsWidget from "../components/main/RecentResultsWidget";
+
+
+
 
 export default function Home() {
   const location = useLocation();
@@ -37,14 +41,14 @@ export default function Home() {
       <HeaderStrip />
       
       <HighlightBanner />
-      <ResultBoard />
+      <RecentResultsWidget/>
 
       {/* --- REALISTIC AD 1: Full Width Banner --- */}
       <BannerAd index={0} type="full" />
       {/* ----------------------------------------- */}
 
       <div ref={resultsRef}>
-        <ResultsTable />
+        <LiveResultCards/>
       </div>
 
       {/* --- REALISTIC ADS 2 & 3: Side-by-Side Grid --- */}
@@ -57,7 +61,7 @@ export default function Home() {
       {/* ----------------------------------------------- */}
 
       <div ref={chartRef}>
-        <GameChartTable />
+        <GameResultsTable/>
       </div>
 
       {/* --- REALISTIC AD 4: Another Full Width Banner --- */}
