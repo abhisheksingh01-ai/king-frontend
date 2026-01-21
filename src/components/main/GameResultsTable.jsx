@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import api from '../../api/api';
 
 const COLUMNS = [
-  { key: 'DESAWAR', label: 'DESAWAR' }, // Mobile ke liye short names (Optional)
+  { key: 'DESAWAR', label: 'DESAWAR' },
   { key: 'SHRI GANESH', label: 'SHRI GANESH' },
   { key: 'DELHI BAZAR', label: 'DELHI BAZAR' },
   { key: 'GALI', label: 'GALI' },
@@ -14,52 +14,101 @@ const COLUMNS = [
 
 const GameResultsTable = () => {
   const [allMonthsData, setAllMonthsData] = useState([]);
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(() => new Date().getMonth());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper: Current Date for highlighting (Computed once)
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+  }, []);
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchResults = async () => {
       try {
-        setLoading(true);
+        // Request start time
+        // console.time("FetchTime"); 
+        
+        // Optimistic UI: Agar purana data cache me ho toh use kar sakte hain (Optional Logic)
         const response = await axios.get(api.NewScrapeData.gameChart);
+        
+        // console.timeEnd("FetchTime");
+
+        if (!isMounted) return;
 
         if (response.data && response.data.success) {
+          const rawData = response.data.data;
+          
+          // FAST CALCULATION START
           let dataYear = new Date().getFullYear();
-          if (response.data.data.length > 0) {
-             const firstDate = response.data.data[0].date;
-             dataYear = parseInt(firstDate.split('-')[2], 10);
+          if (rawData.length > 0) {
+             // Safe check for date format
+             const firstDate = rawData[0].date;
+             if(firstDate) dataYear = parseInt(firstDate.split('-')[2], 10);
           }
-          const processed = generateFullYearData(response.data.data, dataYear);
+
+          // Optimization 1: Convert Array to Map (Lookup Object) for O(1) Access
+          // Isse loop me .find() nahi lagana padega
+          const dataMap = new Map();
+          rawData.forEach(item => {
+            dataMap.set(item.date, item);
+          });
+
+          // Process Data
+          const processed = generateFullYearData(dataMap, dataYear);
+          
           setAllMonthsData(processed);
-          setCurrentMonthIndex(new Date().getMonth());
+          
+          // Current month automatically set via initial state, but ensure sync if year changes
+          const currentMonth = new Date().getMonth();
+          setCurrentMonthIndex(currentMonth);
+
         } else {
           setError("Failed to retrieve data.");
         }
       } catch (err) {
         console.error(err);
-        setError("Something went wrong.");
+        if (isMounted) setError("Something went wrong.");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchResults();
+
+    return () => { isMounted = false; };
   }, []);
 
-  const generateFullYearData = (backendData, year) => {
+  // Optimization 2: Faster Generation Logic
+  const generateFullYearData = (dataMap, year) => {
     const fullYearGroups = [];
+    
+    // Pre-calculate month names to avoid .toLocaleString inside loop
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+    ];
+
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+      // Get days in month efficiently
       const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
       const monthRows = [];
-      const monthName = new Date(year, monthIndex).toLocaleString('default', { month: 'long', year: 'numeric' });
+      const monthStr = String(monthIndex + 1).padStart(2, '0');
+      const title = `${monthNames[monthIndex]} ${year}`;
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${String(day).padStart(2, '0')}-${String(monthIndex + 1).padStart(2, '0')}-${year}`;
-        const foundData = backendData.find(d => d.date === dateStr);
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${dayStr}-${monthStr}-${year}`;
+        
+        // INSTANT LOOKUP (No .find loop)
+        const foundData = dataMap.get(dateStr);
+        
         monthRows.push(foundData || { date: dateStr, games: {} });
       }
-      fullYearGroups.push({ id: `${monthIndex}-${year}`, title: monthName, rows: monthRows });
+      fullYearGroups.push({ id: `${monthIndex}-${year}`, title: title, rows: monthRows });
     }
     return fullYearGroups;
   };
@@ -67,9 +116,17 @@ const GameResultsTable = () => {
   const handlePrevMonth = () => { if (currentMonthIndex > 0) setCurrentMonthIndex(currentMonthIndex - 1); };
   const handleNextMonth = () => { if (currentMonthIndex < 11) setCurrentMonthIndex(currentMonthIndex + 1); };
 
+  // Fail-safe access
   const currentData = allMonthsData[currentMonthIndex];
 
-  if (loading) return <div className="p-8 text-center text-blue-600 animate-pulse font-bold text-lg">Loading Chart...</div>;
+  // RENDER OPTIMIZATION: Loading State Skeleton (Optional: looks faster than text)
+  if (loading) return (
+    <div className="p-8 flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-blue-600 font-bold animate-pulse">Loading Live Chart...</div>
+    </div>
+  );
+
   if (error) return <div className="p-4 text-center text-red-600 bg-red-50 border border-red-200 rounded-lg mx-4">{error}</div>;
   if (!currentData) return <div className="p-8 text-center text-gray-500">No Data Available</div>;
 
@@ -105,17 +162,16 @@ const GameResultsTable = () => {
 
       {/* TABLE */}
       <div className="w-full max-w-4xl mx-auto overflow-hidden border border-gray-300 shadow-xl rounded-xl bg-white flex flex-col h-[75vh] md:h-auto">
-        <div className="overflow-auto flex-1 relative scroll-smooth">
+        <div className="overflow-auto flex-1 relative scroll-smooth will-change-transform">
           <table className="min-w-full text-center border-collapse">
             
             <thead className="bg-slate-800 text-white font-bold uppercase text-xs md:text-sm tracking-wider sticky top-0 z-30 shadow-md">
               <tr>
-                {/* Fixed: Min-width badha di taaki Full Date aa sake */}
                 <th className="p-3 border-r border-slate-600 sticky left-0 z-40 bg-slate-800 min-w-25 whitespace-nowrap shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                   Date
                 </th>
                 {COLUMNS.map((col) => (
-                  <th key={col.key} className="p-3 border-r border-slate-600 min-w-15 whitespace-nowrap">
+                  <th key={col.key} className="p-3 border-r border-slate-600 min-w-20 whitespace-nowrap">
                     <span className="md:hidden">{col.label}</span>
                     <span className="hidden md:inline">{col.key}</span>
                   </th>
@@ -123,27 +179,28 @@ const GameResultsTable = () => {
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-200 text-xs md:text-sm">
+            {/* Use key on tbody to force efficient re-renders when month changes */}
+            <tbody key={currentMonthIndex} className="divide-y divide-gray-200 text-xs md:text-sm">
               {currentData.rows.map((row, index) => {
-                const isToday = row.date === new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+                const isToday = row.date === todayStr;
+                // Pre-calculate classes to avoid logic in JSX
                 const rowBg = isToday ? 'bg-yellow-100' : (index % 2 === 0 ? 'bg-white' : 'bg-slate-50');
 
                 return (
                   <tr key={row.date} className={`${rowBg} hover:bg-blue-50 transition-colors`}>
                     
-                    {/* Fixed: Full Date Display Logic */}
                     <td className={`p-3 font-bold text-gray-700 border-r border-gray-200 sticky left-0 z-20 ${rowBg} whitespace-nowrap shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
                       {row.date}
                     </td>
 
                     {COLUMNS.map((col) => {
-                      const result = row.games?.[col.key]?.result || "";
+                      const result = row.games?.[col.key]?.result; // Direct access
                       return (
                         <td key={`${row.date}-${col.key}`} className="p-3 border-r border-gray-200 font-bold text-gray-900 min-w-15">
                           {result ? (
                             <span className="scale-100 block">{result}</span>
                           ) : (
-                            <span className="text-gray-300 text-[10px]"></span>
+                            <span className="text-gray-300 text-[10px]">-</span>
                           )}
                         </td>
                       );
@@ -156,7 +213,7 @@ const GameResultsTable = () => {
         </div>
       </div>
       
-      <p className="text-center text-xs text-gray-400 pb-4">
+      <p className="text-center text-xs text-gray-400 pb-4 pt-2">
         Scroll right to see results →
       </p>
 

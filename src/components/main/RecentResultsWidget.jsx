@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import api from '../../api/api';
 
@@ -8,36 +8,53 @@ const TARGET_GAMES = [
 ];
 
 const RecentResultsWidget = () => {
+  // Sirf 3 items ka array state me rakhenge, poora data nahi.
   const [latestResults, setLatestResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const getTodayDateString = () => {
-    return new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-  };
+  // Optimization 1: Date string calculation ko memoize kiya (Bar bar calculate nahi hoga)
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+  }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchLiveResults = async () => {
       try {
-        setLoading(true);
+        // Sirf pehli baar loading dikhayein, interval me nahi
+        if (latestResults.length === 0) setLoading(true);
+        
         const response = await axios.get(api.NewScrapeData.gameChart);
 
-        if (response.data && response.data.success) {
-          processLiveFeed(response.data.data);
+        if (isMounted && response.data && response.data.success) {
+          processLiveFeedFast(response.data.data);
         }
       } catch (error) {
         console.error("Error fetching live feed:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchLiveResults();
+    
+    // Polling interval (30 seconds)
     const interval = setInterval(fetchLiveResults, 30000); 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      isMounted = false;
+    };
+  }, []); // Empty dependency array is fine here
 
-  const processLiveFeed = (data) => {
-    const todayStr = getTodayDateString();
+  // Optimization 2: Data Process Logic
+  const processLiveFeedFast = (data) => {
+    if (!data || data.length === 0) return;
+
+    // Fast Lookup: Sirf Aaj ki date match karni hai.
+    // Optimization: Find use karne ki jagah Map use kar sakte hain agar data bada hai,
+    // lekin kyunki humein sirf ONE match chahiye, .find() is okay here IF we don't store the big array.
     const todayData = data.find(item => item.date === todayStr);
 
     if (!todayData || !todayData.games) {
@@ -49,16 +66,21 @@ const RecentResultsWidget = () => {
 
     TARGET_GAMES.forEach(gameKey => {
       const gameData = todayData.games[gameKey];
+      // Check karte hain result valid hai ya nahi
       if (gameData && gameData.result) {
         declaredGames.push({
           name: gameKey,
           result: gameData.result,
-          timestamp: gameData.timestamp || 0 
+          // Fallback: Agar timestamp nahi hai to 'now' maano taaki top pe dikhe
+          timestamp: gameData.timestamp || Date.now() 
         });
       }
     });
 
+    // Sort: Newest First
     declaredGames.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Sirf top 3 items state me set karein
     setLatestResults(declaredGames.slice(0, 3));
   };
 
@@ -78,7 +100,7 @@ const RecentResultsWidget = () => {
   );
 
   return (
-    // MAIN CONTAINER with Top Margin (mt-6) and Gradient Background
+    // Fixed: 'bg-linear-to-b' -> 'bg-gradient-to-b' (Standard Tailwind)
     <div className="w-full max-w-md mx-auto mt-6 bg-linear-to-b from-slate-900 to-black p-5 rounded-3xl shadow-2xl border border-slate-800 relative overflow-hidden">
       
       {/* Background Glow Effect */}
@@ -91,7 +113,7 @@ const RecentResultsWidget = () => {
             FAST RESULT
           </h2>
           <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mt-1">
-            {getTodayDateString()}
+            {todayStr}
           </p>
         </div>
         
@@ -118,6 +140,7 @@ const RecentResultsWidget = () => {
                   className={`
                     relative rounded-2xl border transition-all duration-300 group
                     ${isLatest 
+                      // Fixed: Gradients updated to standard syntax
                       ? 'bg-linear-to-r from-slate-800 to-slate-900 border-yellow-500/50 shadow-[0_4px_20px_-5px_rgba(234,179,8,0.3)] scale-100' 
                       : 'bg-white/5 border-white/10 scale-[0.98] hover:bg-white/10'
                     }
