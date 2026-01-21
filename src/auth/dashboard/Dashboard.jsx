@@ -77,7 +77,7 @@ const Dashboard = () => {
   useEffect(() => {
      // EXACT times you want the scraper to run (24h format)
      const targetTimes = [
-      "06:30", "15:20", "14:59", "18:29", "18:49", "23:45"
+      "06:30", "15:20", "16:50", "18:20", "21:45", "23:45"
     ];
 
     // Check every 1 second (1000ms) to ensure we don't miss the minute
