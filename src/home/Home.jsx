@@ -13,6 +13,7 @@ import BannerAd from "../components/ads/BannerAd";
 import GameResultsTable from "../components/main/GameResultsTable";
 import LiveResultCards from "../components/main/LiveResultCards";
 import RecentResultsWidget from "../components/main/RecentResultsWidget";
+import RateAds from "../components/ads/RateAds";
 
 
 
@@ -41,10 +42,12 @@ export default function Home() {
       <HeaderStrip />
       
       <HighlightBanner />
+      <RateAds index={0} type="full" />
       <RecentResultsWidget/>
 
       {/* --- REALISTIC AD 1: Full Width Banner --- */}
-      <BannerAd index={0} type="full" />
+      
+      {/* <BannerAd index={0} type="full" /> */}
       {/* ----------------------------------------- */}
 
       <div ref={resultsRef}>

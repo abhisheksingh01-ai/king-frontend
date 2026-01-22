@@ -43,10 +43,10 @@ export default function BannerAd({ index = 0, type = "full" }) {
         <div className={`relative w-full overflow-hidden rounded-xl border-2 ${ad.border} shadow-[0_0_20px_rgba(0,0,0,0.5)]`}>
           
           {/* Background Gradient */}
-          <div className={`absolute inset-0 bg-gradient-to-r ${ad.color} opacity-90`}></div>
+          <div className={`absolute inset-0 bg-linear-to-r ${ad.color} opacity-90`}></div>
           
           {/* Shine Animation */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+          <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between px-4 py-3 md:px-8 md:py-4">
             
@@ -88,7 +88,7 @@ export default function BannerAd({ index = 0, type = "full" }) {
   if (type === "box") {
     return (
       <div onClick={handleClick} className="w-full cursor-pointer group">
-        <div className={`relative h-full bg-gradient-to-br ${ad.color} border-2 ${ad.border} rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-lg hover:shadow-2xl transition-all`}>
+        <div className={`relative h-full bg-linear-to-br ${ad.color} border-2 ${ad.border} rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-lg hover:shadow-2xl transition-all`}>
           <div className="absolute top-2 right-2 bg-white/20 px-2 py-0.5 rounded text-[8px] text-white font-bold">AD</div>
           
           <h3 className="text-white font-black text-xl uppercase mb-1 drop-shadow-md">{ad.title}</h3>
