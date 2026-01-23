@@ -14,6 +14,9 @@ import GameResultsTable from "../components/main/GameResultsTable";
 import LiveResultCards from "../components/main/LiveResultCards";
 import RecentResultsWidget from "../components/main/RecentResultsWidget";
 import RateAds from "../components/ads/RateAds";
+import RonakAd from "../components/ads/RonakAd";
+import KingOfSatta from "../components/ads/KingOfSatta";
+import ChoudharySahabCard from "../components/ads/ChoudharySahabCard";
 
 
 
@@ -39,39 +42,34 @@ export default function Home() {
   return (
     <>
       <Navbar />
+      
       <HeaderStrip />
       
       <HighlightBanner />
+
+      <RonakAd/>
+
       <RateAds index={0} type="full" />
+
       <RecentResultsWidget/>
 
-      {/* --- REALISTIC AD 1: Full Width Banner --- */}
       
-      {/* <BannerAd index={0} type="full" /> */}
-      {/* ----------------------------------------- */}
-
       <div ref={resultsRef}>
         <LiveResultCards/>
       </div>
 
-      {/* --- REALISTIC ADS 2 & 3: Side-by-Side Grid --- */}
-      <div className="max-w-5xl mx-auto px-2 my-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <BannerAd index={1} type="box" />
-          <BannerAd index={2} type="box" />
-        </div>
-      </div>
-      {/* ----------------------------------------------- */}
+
+      <KingOfSatta/>
 
       <div ref={chartRef}>
         <GameResultsTable/>
       </div>
 
-      {/* --- REALISTIC AD 4: Another Full Width Banner --- */}
-      <BannerAd index={0} type="full" />
-      {/* ----------------------------------------- */}
+      <RateAds index={0} type="full" />
+
+      <ChoudharySahabCard/>
       
-      <Ads/>
+      {/* <Ads/> */}
       <WhatsAppButton />
     </>
   );
